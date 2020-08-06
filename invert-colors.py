@@ -44,16 +44,17 @@ def invert_color_p(image):
   palette = image.getpalette()
   I_max = 255
   inv_palette = [I_max - x for x in palette]
-  image.putpalette(inv_palette)
-  return image
+  inv_image = image
+  inv_image.putpalette(inv_palette)
+  return inv_image
 
 
-def invert_color(path, image, format, mode):
+def invert_color(path, image, mode):
   log('color inversion started')
   root, extension = os.path.splitext(path)
   suffix = '_invert'
   dest_image = root + suffix + extension
-  log('destination: \'' + str(dest_image) + '\'')
+  log('destination: \'' + path + '\'')
   if os.path.isfile(dest_image) is True:
     log('destination file already exists')
     message = '\033[31mWARNING:\033[0m Existing file will be overwritten.\nType yes to continue or Ctrl+c to cancel: '
@@ -70,36 +71,47 @@ def invert_color(path, image, format, mode):
   log('color inversion finished')
 
 
-def invert_green_ch(image):
-  log('green channel inversion started')
-  log('source: \'' + str(image) + '\'')
-  root, extension = os.path.splitext(image)
-  suffix = '_invert_green'
+def invert_channel_rgb(image, channel):
+  red, green, blue = image.split()[0:3]
+  if channel == 'red':
+    inv_channel = ImageChops.invert(red)
+    inv_image = Image.merge('RGB', [inv_channel, green, blue])
+  if channel == 'green':
+    inv_channel = ImageChops.invert(green)
+    inv_image = Image.merge('RGB', [red, inv_channel, blue])
+  if channel == 'blue':
+    inv_channel = ImageChops.invert(blue)
+    inv_image = Image.merge('RGB', [red, green, inv_channel])
+  return inv_image
+
+
+def invert_channel_rgba(image, channel):
+  alpha = image.getchannel('A')
+  image = image.convert('RGB')
+  inv_image = invert_channel_rgb(image, channel)
+  inv_image.putalpha(alpha)
+  return inv_image
+
+
+def invert_channel(path, image, mode, channel):
+  log(channel + ' channel inversion started')
+  root, extension = os.path.splitext(path)
+  suffix = '_invert_' + channel
   dest_image = root + suffix + extension
-  log('destination: \'' + str(dest_image) + '\'')
+  log('destination: \'' + path + '\'')
   if os.path.isfile(dest_image) is True:
     log('destination file already exists')
     message = '\033[31mWARNING:\033[0m Existing file will be overwritten.\nType yes to continue or Ctrl+c to cancel: '
     confirm = ask_user(message)
     while confirm != "yes":
       confirm = ask_user(message)
-  file_obj = Image.open(image)
-  png = False
-  alpha = None
-  log('format: ' + file_obj.format.lower())
-  if file_obj.format.lower() == 'png':
-    png = True
-    if len(file_obj.getbands()) == 4:
-      alpha = file_obj.split()[3]
-      file_obj = file_obj.convert('RGB')
-  red, green, blue = file_obj.split()[0:3]
-  green_inv = ImageChops.invert(green)
-  inv_image = Image.merge('RGB', [red, green_inv, blue])
-  #inv_image = green_ch_inv
-  if png == True and alpha != None:
-    inv_image.putalpha(alpha)
+  log('format: ' + image.format.lower())
+  if mode == 'RGBA':
+    inv_image = invert_channel_rgba(image, channel)
+  else:
+    inv_image = invert_channel_rgb(image, channel)
   inv_image.save(dest_image)
-  log('green channel inversion finished')
+  log(channel + ' channel inversion finished')
 
 
 def main():
@@ -115,6 +127,7 @@ def main():
   exclusive.add_argument('-g', help='Inverts green channel', action='store_true') #Invert green channel
   exclusive.add_argument('-b', help='Inverts blue channel', action='store_true') #Invert blue channel
   parser.add_argument('-l', help='Produces a log file', action='store_true') #Log file creation flag
+  # TODO: Destination folder
   args = parser.parse_args()
   global logging
   if args.l == True:
@@ -122,7 +135,7 @@ def main():
   else:
     logging = False
   log('conversion started')
-  if args.c == False and args.g == False: #Exits graciously if no conversion argument has been passed
+  if True not in [args.c, args.r, args.g, args.b]: #Exits graciously if no conversion argument has been passed
     log('no conversion arguments. Nothing to do')
     exit()
   if os.path.isfile(args.s) != True: #Exits graciously if file doesn't exist
@@ -135,9 +148,13 @@ def main():
   mode = image.mode
   log('mode: ' + mode)
   if args.c == True:
-    invert_color(args.s, image, format, mode)
+    invert_color(args.s, image, mode)
+  elif args.r == True:
+    invert_channel(args.s, image, mode, 'red')
   elif args.g == True:
-    invert_green_ch(args.s)
+    invert_channel(args.s, image, mode, 'green')
+  elif args.b == True:
+    invert_channel(args.s, image, mode, 'blue')
   log('conversion finished')
 
 
