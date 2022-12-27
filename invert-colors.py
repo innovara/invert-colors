@@ -52,15 +52,18 @@ def invert_color_p(image):
 def invert_color(path, image, mode):
   log('color inversion started')
   root, extension = os.path.splitext(path)
-  suffix = '_invert'
+  suffix = '_inv'
   dest_image = root + suffix + extension
-  log('destination: \'' + path + '\'')
+  log('destination: \'' + dest_image + '\'')
   if os.path.isfile(dest_image) is True:
-    log('destination file already exists')
-    message = '\033[31mWARNING:\033[0m Existing file will be overwritten.\nType yes to continue or Ctrl+c to cancel: '
-    confirm = ask_user(message)
-    while confirm != "yes":
+    if overwrite == True:
+      pass
+    else:
+      log('destination file already exists')
+      message = '\033[31mWARNING:\033[0m Existing file will be overwritten.\nType yes to continue or Ctrl+c to cancel: '
       confirm = ask_user(message)
+      while confirm != "yes":
+        confirm = ask_user(message)
   if mode == 'RGBA':
     inv_image = invert_color_rgba(image)
   elif mode == 'P':
@@ -96,39 +99,61 @@ def invert_channel_rgba(image, channel):
 def invert_channel(path, image, mode, channel):
   log(channel + ' channel inversion started')
   root, extension = os.path.splitext(path)
-  suffix = '_invert_' + channel
+  suffix = '_inv_' + channel
   dest_image = root + suffix + extension
-  log('destination: \'' + path + '\'')
+  log('destination: \'' + dest_image + '\'')
   if os.path.isfile(dest_image) is True:
     log('destination file already exists')
-    message = '\033[31mWARNING:\033[0m Existing file will be overwritten.\nType yes to continue or Ctrl+c to cancel: '
-    confirm = ask_user(message)
-    while confirm != "yes":
+    if overwrite == True:
+      pass
+    else:
+      message = '\033[31mWARNING:\033[0m Existing file will be overwritten.\nType yes to continue or Ctrl+c to cancel: '
       confirm = ask_user(message)
+      while confirm != "yes":
+        confirm = ask_user(message)
   log('format: ' + image.format.lower())
   if mode == 'RGBA':
     inv_image = invert_channel_rgba(image, channel)
-  else:
+  elif mode == 'RGB':
     inv_image = invert_channel_rgb(image, channel)
+  elif mode == 'L' or mode == 'LA':
+    log(path + ' doesn\'t have RGB channels.')
+    print(path + ' doesn\'t have RGB channels.')
+    return
+  elif mode == 'P' or mode == 'PA':
+    log('inverting RGB channels of palettised images is not supported.')
+    print('Inverting RGB channels of palettised images is not supported.')
+    return
+  else:
+    log('can\'t invert channel. Unsupported image mode \'' + mode + '\'.')
+    print('Can\'t invert channel. Unsupported image mode \'' + mode + '\'.')
+    return
   inv_image.save(dest_image)
   log(channel + ' channel inversion finished')
 
 
 def main():
-  '''Inverts color or green channel of a given image.
+  '''Inverts colors, or red, or green, or red channel of a given image.
   Supported formats are .PNG. JPG and .TGA
   Any other format may or may not work but you are free to try.'''
   parser = argparse.ArgumentParser(description='Inverts colors or a color channel of an image.')
   required = parser.add_argument_group('required arguments')
   exclusive = parser.add_mutually_exclusive_group()
+  optional = parser.add_argument_group('optional arguments')
   required.add_argument('-s', metavar='<src>', required=True, help='<src> image', type=str) #Source image path
   exclusive.add_argument('-c', help='Inverts color', action='store_true') #Flag to invert color
   exclusive.add_argument('-r', help='Inverts red channel', action='store_true') #Invert red channel
   exclusive.add_argument('-g', help='Inverts green channel', action='store_true') #Invert green channel
   exclusive.add_argument('-b', help='Inverts blue channel', action='store_true') #Invert blue channel
-  parser.add_argument('-l', help='Produces a log file', action='store_true') #Log file creation flag
+  optional.add_argument('-y', help='Overwrite existing file', action='store_true') #Overwrites the output file if it exists
+  optional.add_argument('-l', help='Produces a log file', action='store_true') #Log file creation flag
   # TODO: Destination folder
   args = parser.parse_args()
+  global overwrite
+  if args.y == True:
+    overwrite = True
+  else:
+    overwrite = False
   global logging
   if args.l == True:
     logging = True
