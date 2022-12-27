@@ -11,7 +11,7 @@ def log(message):
   if logging == True:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(now + ': ' + message + '.')
-    log_file = 'convert.log'
+    log_file = 'invert-colors.log'
     with open(log_file, 'a', encoding='utf-8') as log:
       log.write(now + ': ' + message + '.\n')
   else:
@@ -146,7 +146,7 @@ def main():
   exclusive.add_argument('-g', help='Inverts green channel', action='store_true') #Invert green channel
   exclusive.add_argument('-b', help='Inverts blue channel', action='store_true') #Invert blue channel
   optional.add_argument('-y', help='Overwrite existing file', action='store_true') #Overwrites the output file if it exists
-  optional.add_argument('-l', help='Produces a log file', action='store_true') #Log file creation flag
+  optional.add_argument('-l', help='Verbose logging', action='store_true') #Log file creation flag
   # TODO: Destination folder
   args = parser.parse_args()
   global overwrite

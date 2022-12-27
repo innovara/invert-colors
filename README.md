@@ -6,19 +6,23 @@ It is obviously a Python script and it supports JPG, PNG and TGA images.
 
 Other formats may or may not work, but you are free to try.
 
+RGB and RGBA mode images can be color inverted and channel inverted.
+
+L, LA, P and PA mode images can only be color inverted.
+
 ## How to use it
 
 Use:
 ```shell
- ./invert-colors.py -s /path/to/image [-c | -r | -g | -b] [-l]
+ ./invert-colors.py -s /path/to/image [-c | -r | -g | -b] [-y] [-l]
  ```
 
 Where:
- - -c inverts all the colors
- - -r inverts the red channel
- - -g inverts the green channel
- - -b inverts the blue channel
+ - -c inverts all colors
+ - -r inverts red channel
+ - -g inverts green channel
+ - -b inverts blue channel
 
-The optional switch -l displays some logs on screen which are also saved to a file.
+The optional switch -y overwrites an existing output file. If you don't use the switch, you will have to confirm that you want to overwrite it.
 
-invert-colors.py will create a new file. If the inverted file already exists, it will ask for confirmation before it overwrites it.
+Lastly, the switch -l shows logs on screen and it also saves them to a text file.
